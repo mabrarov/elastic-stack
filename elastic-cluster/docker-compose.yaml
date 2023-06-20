@@ -1,10 +1,44 @@
-version: '2.1'
+version: "2.1"
+
+x-elasticsearch-username: &elasticsearch-username
+  "elastic"
+
+x-elasticsearch-password: &elasticsearch-password
+  "elastic"
+
+x-ulimits: &default-ulimits
+  memlock:
+    soft: -1
+    hard: -1
+
+x-elasticsearch-data-node-limits: &elasticsearch-data-node-limits
+  mem_limit: "1024m"
+  mem_reservation: "512m"
+
+x-elasticsearch-master-nodes: &elasticsearch-master-nodes
+  cluster.name: "elasticsearch"
+  discovery.seed_hosts: "elasticsearch1,elasticsearch2,elasticsearch3"
+  cluster.initial_master_nodes: "elasticsearch1,elasticsearch2,elasticsearch3"
+
+x-elasticsearch-data-conf: &elasticsearch-data-conf
+  <<: *elasticsearch-master-nodes
+  node.master: "true"
+  node.data: "true"
+  node.attr.data: "hot"
+  node.ingest: "true"
+  node.ml: "false"
+  node.transform: "false"
+  node.remote_cluster_client: "false"
+  xpack.ml.enabled: "false"
+  xpack.transform.enabled: "false"
+  xpack.security.enabled: "true"
+  ELASTIC_PASSWORD: *elasticsearch-password
 
 x-logging: &default-logging
-  driver: 'json-file'
+  driver: "json-file"
   options:
-    max-size: '12m'
-    max-file: '5'
+    max-size: "12m"
+    max-file: "5"
 
 volumes:
   elasticsearch1-data:
@@ -15,144 +49,83 @@ volumes:
 
 services:
   elasticsearch1:
-    image: 'elasticsearch:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "elasticsearch:7.17.9"
+    <<: *elasticsearch-data-node-limits
+    ulimits: *default-ulimits
     environment:
-      node.name: 'elasticsearch1'
-      cluster.name: 'elasticsearch'
-      discovery.seed_hosts: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      cluster.initial_master_nodes: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      node.master: 'true'
-      node.data: 'true'
-      node.attr.data: 'hot'
-      node.ingest: 'true'
-      node.ml: 'false'
-      node.transform: 'false'
-      node.remote_cluster_client: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.transform.enabled: 'false'
-      xpack.security.enabled: 'true'
-      ELASTIC_PASSWORD: 'elastic'
+      node.name: "elasticsearch1"
+      <<: *elasticsearch-data-conf
     ports:
-      - '9201:9200'
+      - "9201:9200"
     volumes:
-      - 'elasticsearch1-data:/usr/share/elasticsearch/data'
+      - "elasticsearch1-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch2:
-    image: 'elasticsearch:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "elasticsearch:7.17.9"
+    <<: *elasticsearch-data-node-limits
+    ulimits: *default-ulimits
     environment:
-      node.name: 'elasticsearch2'
-      cluster.name: 'elasticsearch'
-      discovery.seed_hosts: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      cluster.initial_master_nodes: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      bootstrap.memory_lock: 'true'
-      node.master: 'true'
-      node.data: 'true'
-      node.attr.data: 'hot'
-      node.ingest: 'true'
-      node.ml: 'false'
-      node.transform: 'false'
-      node.remote_cluster_client: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.transform.enabled: 'false'
-      xpack.security.enabled: 'true'
-      ELASTIC_PASSWORD: 'elastic'
+      node.name: "elasticsearch2"
+      <<: *elasticsearch-data-conf
     ports:
-      - '9202:9200'
+      - "9202:9200"
     volumes:
-      - 'elasticsearch2-data:/usr/share/elasticsearch/data'
+      - "elasticsearch2-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch3:
-    image: 'elasticsearch:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "elasticsearch:7.17.9"
+    <<: *elasticsearch-data-node-limits
+    ulimits: *default-ulimits
     environment:
-      node.name: 'elasticsearch3'
-      cluster.name: 'elasticsearch'
-      discovery.seed_hosts: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      cluster.initial_master_nodes: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      bootstrap.memory_lock: 'true'
-      node.master: 'true'
-      node.data: 'true'
-      node.attr.data: 'hot'
-      node.ingest: 'true'
-      node.ml: 'false'
-      node.transform: 'false'
-      node.remote_cluster_client: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.transform.enabled: 'false'
-      xpack.security.enabled: 'true'
-      ELASTIC_PASSWORD: 'elastic'
+      node.name: "elasticsearch3"
+      <<: *elasticsearch-data-conf
     ports:
-      - '9203:9200'
+      - "9203:9200"
     volumes:
-      - 'elasticsearch3-data:/usr/share/elasticsearch/data'
+      - "elasticsearch3-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch4:
-    image: 'elasticsearch:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "elasticsearch:7.17.9"
+    mem_limit: "1024m"
+    mem_reservation: "512m"
+    ulimits: *default-ulimits
     environment:
-      node.name: 'elasticsearch4'
-      cluster.name: 'elasticsearch'
-      discovery.seed_hosts: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      cluster.initial_master_nodes: 'elasticsearch1,elasticsearch2,elasticsearch3'
-      bootstrap.memory_lock: 'true'
-      node.master: 'false'
-      node.voting_only: 'false'
-      node.data: 'false'
-      node.ingest: 'false'
-      node.ml: 'false'
-      node.transform: 'false'
-      node.remote_cluster_client: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.transform.enabled: 'false'
-      xpack.security.enabled: 'true'
-      ELASTIC_PASSWORD: 'elastic'
+      node.name: "elasticsearch4"
+      <<: *elasticsearch-master-nodes
+      bootstrap.memory_lock: "true"
+      node.master: "false"
+      node.voting_only: "false"
+      node.data: "false"
+      node.ingest: "false"
+      node.ml: "false"
+      node.transform: "false"
+      node.remote_cluster_client: "false"
+      xpack.ml.enabled: "false"
+      xpack.transform.enabled: "false"
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: *elasticsearch-password
     volumes:
-      - 'elasticsearch4-data:/usr/share/elasticsearch/data'
+      - "elasticsearch4-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   kibana:
-    image: 'kibana:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "kibana:7.17.9"
+    mem_limit: "1024m"
+    mem_reservation: "512m"
+    ulimits: *default-ulimits
     environment:
-      SERVER_PUBLICBASEURL: 'http://localhost:5601'
-      ELASTICSEARCH_HOSTS: 'http://elasticsearch4:9200'
-      xpack.security.enabled: 'true'
-      ELASTICSEARCH_USERNAME: 'elastic'
-      ELASTICSEARCH_PASSWORD: 'elastic'
-      TELEMETRY_ENABLED: 'false'
-      NEWSFEED_ENABLED: 'false'
+      SERVER_PUBLICBASEURL: "http://localhost:5601"
+      ELASTICSEARCH_HOSTS: "http://elasticsearch4:9200"
+      xpack.security.enabled: "true"
+      ELASTICSEARCH_USERNAME: *elasticsearch-username
+      ELASTICSEARCH_PASSWORD: *elasticsearch-password
+      TELEMETRY_ENABLED: "false"
+      NEWSFEED_ENABLED: "false"
     ports:
-      - '5601:5601'
+      - "5601:5601"
     volumes:
-      - 'kibana-data:/usr/share/kibana/data'
+      - "kibana-data:/usr/share/kibana/data"
     logging: *default-logging

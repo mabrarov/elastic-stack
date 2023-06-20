@@ -1,10 +1,21 @@
-version: '2.1'
+version: "2.1"
+
+x-elasticsearch-username: &elasticsearch-username
+  "elastic"
+
+x-elasticsearch-password: &elasticsearch-password
+  "elastic"
+
+x-ulimits: &default-ulimits
+  memlock:
+    soft: -1
+    hard: -1
 
 x-logging: &default-logging
-  driver: 'json-file'
+  driver: "json-file"
   options:
-    max-size: '12m'
-    max-file: '5'
+    max-size: "12m"
+    max-file: "5"
 
 volumes:
   elasticsearch-data:
@@ -12,42 +23,36 @@ volumes:
 
 services:
   elasticsearch:
-    image: 'elasticsearch:7.17.9'
-    mem_limit: '2048m'
-    mem_reservation: '1024m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "elasticsearch:7.17.9"
+    mem_limit: "2048m"
+    mem_reservation: "1024m"
+    ulimits: *default-ulimits
     environment:
-      discovery.type: 'single-node'
-      xpack.security.enabled: 'true'
-      ELASTIC_PASSWORD: 'elastic'
-      node.attr.data: 'hot'
+      discovery.type: "single-node"
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: *elasticsearch-password
+      node.attr.data: "hot"
     ports:
-      - '9200:9200'
+      - "9200:9200"
     volumes:
-      - 'elasticsearch-data:/usr/share/elasticsearch/data'
+      - "elasticsearch-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   kibana:
-    image: 'kibana:7.17.9'
-    mem_limit: '1024m'
-    mem_reservation: '512m'
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+    image: "kibana:7.17.9"
+    mem_limit: "1024m"
+    mem_reservation: "512m"
+    ulimits: *default-ulimits
     environment:
-      SERVER_PUBLICBASEURL: 'http://localhost:5601'
-      ELASTICSEARCH_HOSTS: 'http://elasticsearch:9200'
-      xpack.security.enabled: 'true'
-      ELASTICSEARCH_USERNAME: 'elastic'
-      ELASTICSEARCH_PASSWORD: 'elastic'
-      TELEMETRY_ENABLED: 'false'
-      NEWSFEED_ENABLED: 'false'
+      SERVER_PUBLICBASEURL: "http://localhost:5601"
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      xpack.security.enabled: "true"
+      ELASTICSEARCH_USERNAME: *elasticsearch-username
+      ELASTICSEARCH_PASSWORD: *elasticsearch-password
+      TELEMETRY_ENABLED: "false"
+      NEWSFEED_ENABLED: "false"
     ports:
-      - '5601:5601'
+      - "5601:5601"
     volumes:
-      - 'kibana-data:/usr/share/kibana/data'
+      - "kibana-data:/usr/share/kibana/data"
     logging: *default-logging
