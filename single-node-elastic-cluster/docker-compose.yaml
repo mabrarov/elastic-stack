@@ -1,0 +1,53 @@
+version: '2.1'
+
+x-logging: &default-logging
+  driver: 'json-file'
+  options:
+    max-size: '12m'
+    max-file: '5'
+
+volumes:
+  elasticsearch-data:
+  kibana-data:
+
+services:
+  elasticsearch:
+    image: 'elasticsearch:7.17.9'
+    mem_limit: '2048m'
+    mem_reservation: '1024m'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      discovery.type: 'single-node'
+      xpack.security.enabled: 'true'
+      ELASTIC_PASSWORD: 'elastic'
+      node.attr.data: 'hot'
+    ports:
+      - '9200:9200'
+    volumes:
+      - 'elasticsearch-data:/usr/share/elasticsearch/data'
+    logging: *default-logging
+
+  kibana:
+    image: 'kibana:7.17.9'
+    mem_limit: '1024m'
+    mem_reservation: '512m'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      SERVER_PUBLICBASEURL: 'http://localhost:5601'
+      ELASTICSEARCH_HOSTS: 'http://elasticsearch:9200'
+      xpack.security.enabled: 'true'
+      ELASTICSEARCH_USERNAME: 'elastic'
+      ELASTICSEARCH_PASSWORD: 'elastic'
+      TELEMETRY_ENABLED: 'false'
+      NEWSFEED_ENABLED: 'false'
+    ports:
+      - '5601:5601'
+    volumes:
+      - 'kibana-data:/usr/share/kibana/data'
+    logging: *default-logging
