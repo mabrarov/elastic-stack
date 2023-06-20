@@ -1,5 +1,8 @@
 version: "2.1"
 
+x-elasticsearch-image: &elasticsearch-image
+  "elasticsearch:7.17.9"
+
 x-elasticsearch-username: &elasticsearch-username
   "elastic"
 
@@ -32,6 +35,7 @@ x-elasticsearch-data-conf: &elasticsearch-data-conf
   xpack.ml.enabled: "false"
   xpack.transform.enabled: "false"
   xpack.security.enabled: "true"
+  xpack.license.self_generated.type: "trial"
   ELASTIC_PASSWORD: *elasticsearch-password
 
 x-logging: &default-logging
@@ -49,7 +53,7 @@ volumes:
 
 services:
   elasticsearch1:
-    image: "elasticsearch:7.17.9"
+    image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     environment:
@@ -62,7 +66,7 @@ services:
     logging: *default-logging
 
   elasticsearch2:
-    image: "elasticsearch:7.17.9"
+    image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     environment:
@@ -75,7 +79,7 @@ services:
     logging: *default-logging
 
   elasticsearch3:
-    image: "elasticsearch:7.17.9"
+    image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     environment:
@@ -88,7 +92,7 @@ services:
     logging: *default-logging
 
   elasticsearch4:
-    image: "elasticsearch:7.17.9"
+    image: *elasticsearch-image
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
@@ -106,6 +110,7 @@ services:
       xpack.ml.enabled: "false"
       xpack.transform.enabled: "false"
       xpack.security.enabled: "true"
+      xpack.license.self_generated.type: "trial"
       ELASTIC_PASSWORD: *elasticsearch-password
     volumes:
       - "elasticsearch4-data:/usr/share/elasticsearch/data"

@@ -13,17 +13,6 @@ elasticsearch_index_name="${elasticsearch_index_alias}-000001"
 kibana_index_pattern_id="${elasticsearch_index_alias}"
 kibana_index_pattern_title="${elasticsearch_index_alias}-*"
 
-response_status_code="$(curl -ks -X POST \
-  -o /dev/null -w '%{http_code}\n' \
-  --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
-  "${elasticsearch_api_url_base}/_license/start_trial?acknowledge=true")"
-if [[ "${response_status_code}" -ne 200 ]]; then
-  echo "Failed to apply Elasticsearch trial license" >&2
-  exit 1
-else
-  echo "Successfully applied Elasticsearch trial license"
-fi
-
 response_status_code="$(curl -s -X PUT \
   -o /dev/null -w '%{http_code}\n' \
   --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
