@@ -19,7 +19,6 @@ x-elasticsearch-data-node-limits: &elasticsearch-data-node-limits
   mem_reservation: "512m"
 
 x-elasticsearch-master-nodes: &elasticsearch-master-nodes
-  cluster.name: "elasticsearch"
   discovery.seed_hosts: "elasticsearch1,elasticsearch2,elasticsearch3"
   cluster.initial_master_nodes: "elasticsearch1,elasticsearch2,elasticsearch3"
 
