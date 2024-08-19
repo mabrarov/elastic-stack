@@ -54,6 +54,47 @@ else
   echo "Successfully created ${elasticsearch_index_name} Elasticsearch index with ${elasticsearch_index_alias} alias"
 fi
 
+for index_num in {2..4}; do
+  elasticsearch_index_name="${elasticsearch_index_alias}-$(printf '%06d' "${index_num}")"
+  response_status_code="$(curl -s -X PUT \
+    -o /dev/null -w '%{http_code}\n' \
+    --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
+    -H 'Content-Type: application/json' \
+    -d \
+  "{
+    \"mappings\": {
+      \"properties\": {
+        \"@timestamp\": {
+          \"type\": \"date\"
+        },
+        \"message\": {
+          \"type\": \"text\",
+          \"fields\": {
+            \"keyword\": {
+              \"type\": \"text\"
+            }
+          }
+        }
+      }
+    },
+    \"settings\": {
+      \"index\": {
+        \"number_of_shards\": 2,
+        \"number_of_replicas\": 1,
+        \"refresh_interval\": \"30s\"
+      }
+    }
+  }
+  " \
+    "${elasticsearch_api_url_base}/${elasticsearch_index_name}")"
+  if [[ "${response_status_code}" -ne 200 ]]; then
+    echo "Failed to create ${elasticsearch_index_name} Elasticsearch index" >&2
+    exit 1
+  else
+    echo "Successfully created ${elasticsearch_index_name} Elasticsearch index with ${elasticsearch_index_alias} alias"
+  fi
+done
+
 response_status_code="$(curl -s -X POST \
   -o /dev/null -w '%{http_code}\n' \
   --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
