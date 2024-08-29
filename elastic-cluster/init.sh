@@ -91,7 +91,7 @@ for index_num in {2..4}; do
     echo "Failed to create ${elasticsearch_index_name} Elasticsearch index" >&2
     exit 1
   else
-    echo "Successfully created ${elasticsearch_index_name} Elasticsearch index with ${elasticsearch_index_alias} alias"
+    echo "Successfully created ${elasticsearch_index_name} Elasticsearch index"
   fi
 done
 
