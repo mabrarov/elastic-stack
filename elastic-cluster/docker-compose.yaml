@@ -1,27 +1,34 @@
 version: "2.1"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
   "elasticsearch:8.15.3"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
   "elastic"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-password: &elasticsearch-password
   "elastic"
 
+# noinspection ComposeUnknownKeys
 x-ulimits: &default-ulimits
   memlock:
     soft: -1
     hard: -1
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-data-node-limits: &elasticsearch-data-node-limits
   mem_limit: "1024m"
   mem_reservation: "512m"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-master-nodes: &elasticsearch-master-nodes
   discovery.seed_hosts: "elasticsearch1,elasticsearch2,elasticsearch3"
   cluster.initial_master_nodes: "elasticsearch1,elasticsearch2,elasticsearch3"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-data-conf: &elasticsearch-data-conf
   <<: *elasticsearch-master-nodes
   node.master: "true"
@@ -37,6 +44,7 @@ x-elasticsearch-data-conf: &elasticsearch-data-conf
   xpack.license.self_generated.type: "trial"
   ELASTIC_PASSWORD: *elasticsearch-password
 
+# noinspection ComposeUnknownKeys
 x-logging: &default-logging
   driver: "json-file"
   options:

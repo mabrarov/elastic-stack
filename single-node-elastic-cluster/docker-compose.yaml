@@ -10,9 +10,11 @@ x-elasticsearch-image: &elasticsearch-image
 x-kibana-image: &kibana-image
   "kibana:8.15.3"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
   "elastic"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-password: &elasticsearch-password
   "elastic"
 
@@ -30,6 +32,7 @@ x-ulimits: &default-ulimits
     soft: -1
     hard: -1
 
+# noinspection ComposeUnknownKeys
 x-logging: &default-logging
   driver: "json-file"
   options:
