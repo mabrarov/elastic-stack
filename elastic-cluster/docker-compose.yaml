@@ -1,8 +1,14 @@
-version: "2.1"
+version: "2.2"
+
+# Refer to https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/docker-compose.yml
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
   "elasticsearch:8.15.3"
+
+# noinspection ComposeUnknownKeys
+x-kibana-image: &kibana-image
+  "kibana:8.15.3"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
@@ -11,6 +17,14 @@ x-elasticsearch-username: &elasticsearch-username
 # noinspection ComposeUnknownKeys
 x-elasticsearch-password: &elasticsearch-password
   "elastic"
+
+# noinspection ComposeUnknownKeys
+x-kibana-username: &kibana-username
+  "kibana_system"
+
+# noinspection ComposeUnknownKeys
+x-kibana-password: &kibana-password
+  "kibana_system"
 
 # noinspection ComposeUnknownKeys
 x-ulimits: &default-ulimits
@@ -31,15 +45,7 @@ x-elasticsearch-master-nodes: &elasticsearch-master-nodes
 # noinspection ComposeUnknownKeys
 x-elasticsearch-data-conf: &elasticsearch-data-conf
   <<: *elasticsearch-master-nodes
-  node.master: "true"
-  node.data: "true"
-  node.attr.data: "hot"
-  node.ingest: "true"
-  node.ml: "false"
-  node.transform: "false"
-  node.remote_cluster_client: "false"
-  xpack.ml.enabled: "false"
-  xpack.transform.enabled: "false"
+  node.roles: "[ master, data, data_hot, ingest ]"
   xpack.security.enabled: "true"
   xpack.license.self_generated.type: "trial"
   ELASTIC_PASSWORD: *elasticsearch-password
@@ -51,6 +57,10 @@ x-logging: &default-logging
     max-size: "12m"
     max-file: "5"
 
+# noinspection ComposeUnknownKeys
+x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
+  "http://elasticsearch4:9200"
+
 volumes:
   elasticsearch1-data:
   elasticsearch2-data:
@@ -59,10 +69,39 @@ volumes:
   kibana-data:
 
 services:
+  setup:
+    image: *elasticsearch-image
+    command:
+      - "bash"
+      - "-c"
+      - |-
+        echo "Waiting for Elasticsearch availability" &&
+        until curl -s "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
+        echo "Setting $${KIBANA_USERNAME} password" &&
+        until curl -s -X POST -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
+        echo "All done!"
+    environment:
+      ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
+      ELASTICSEARCH_API_USERNAME: *elasticsearch-username
+      ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
+      KIBANA_USERNAME: *kibana-username
+      KIBANA_PASSWORD: *kibana-password
+
   elasticsearch1:
+    depends_on:
+      setup:
+        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "curl -s http://localhost:9200 | grep -q 'missing authentication credentials'"
+      interval: "10s"
+      timeout: "10s"
+      retries: 120
     environment:
       node.name: "elasticsearch1"
       <<: *elasticsearch-data-conf
@@ -73,9 +112,20 @@ services:
     logging: *default-logging
 
   elasticsearch2:
+    depends_on:
+      setup:
+        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "curl -s http://localhost:9200 | grep -q 'missing authentication credentials'"
+      interval: "10s"
+      timeout: "10s"
+      retries: 120
     environment:
       node.name: "elasticsearch2"
       <<: *elasticsearch-data-conf
@@ -86,9 +136,20 @@ services:
     logging: *default-logging
 
   elasticsearch3:
+    depends_on:
+      setup:
+        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "curl -s http://localhost:9200 | grep -q 'missing authentication credentials'"
+      interval: "10s"
+      timeout: "10s"
+      retries: 120
     environment:
       node.name: "elasticsearch3"
       <<: *elasticsearch-data-conf
@@ -99,23 +160,30 @@ services:
     logging: *default-logging
 
   elasticsearch4:
+    depends_on:
+      elasticsearch1:
+        condition: "service_healthy"
+      elasticsearch2:
+        condition: "service_healthy"
+      elasticsearch3:
+        condition: "service_healthy"
     image: *elasticsearch-image
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "curl -s http://localhost:9200 | grep -q 'missing authentication credentials'"
+      interval: "10s"
+      timeout: "10s"
+      retries: 120
     environment:
       node.name: "elasticsearch4"
       <<: *elasticsearch-master-nodes
       bootstrap.memory_lock: "true"
-      node.master: "false"
-      node.voting_only: "false"
-      node.data: "false"
-      node.ingest: "false"
-      node.ml: "false"
-      node.transform: "false"
-      node.remote_cluster_client: "false"
-      xpack.ml.enabled: "false"
-      xpack.transform.enabled: "false"
+      node.roles: "[ ]"
       xpack.security.enabled: "true"
       xpack.license.self_generated.type: "trial"
       ELASTIC_PASSWORD: *elasticsearch-password
@@ -124,16 +192,27 @@ services:
     logging: *default-logging
 
   kibana:
-    image: "kibana:8.15.3"
+    depends_on:
+      elasticsearch4:
+        condition: "service_healthy"
+    image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'"
+      interval: "10s"
+      timeout: "10s"
+      retries: 120
     environment:
       SERVER_PUBLICBASEURL: "http://localhost:5601"
-      ELASTICSEARCH_HOSTS: "http://elasticsearch4:9200"
+      ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
       xpack.security.enabled: "true"
-      ELASTICSEARCH_USERNAME: *elasticsearch-username
-      ELASTICSEARCH_PASSWORD: *elasticsearch-password
+      ELASTICSEARCH_USERNAME: *kibana-username
+      ELASTICSEARCH_PASSWORD: *kibana-password
       TELEMETRY_ENABLED: "false"
       NEWSFEED_ENABLED: "false"
     ports:

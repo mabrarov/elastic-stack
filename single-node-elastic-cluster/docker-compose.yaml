@@ -48,6 +48,24 @@ volumes:
   kibana-data:
 
 services:
+  setup:
+    image: *elasticsearch-image
+    command:
+      - "bash"
+      - "-c"
+      - |-
+        echo "Waiting for Elasticsearch availability" &&
+        until curl -s "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
+        echo "Setting $${KIBANA_USERNAME} password" &&
+        until curl -s -X POST -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
+        echo "All done!"
+    environment:
+      ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
+      ELASTICSEARCH_API_USERNAME: *elasticsearch-username
+      ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
+      KIBANA_USERNAME: *kibana-username
+      KIBANA_PASSWORD: *kibana-password
+
   elasticsearch:
     depends_on:
       setup:
@@ -74,24 +92,6 @@ services:
     volumes:
       - "elasticsearch-data:/usr/share/elasticsearch/data"
     logging: *default-logging
-
-  setup:
-    image: *elasticsearch-image
-    command:
-      - "bash"
-      - "-c"
-      - |-
-        echo "Waiting for Elasticsearch availability" &&
-        until curl -s "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
-        echo "Setting $${KIBANA_USERNAME} password" &&
-        until curl -s -X POST -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
-        echo "All done!"
-    environment:
-      ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
-      ELASTICSEARCH_API_USERNAME: *elasticsearch-username
-      ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
-      KIBANA_USERNAME: *kibana-username
-      KIBANA_PASSWORD: *kibana-password
 
   kibana:
     depends_on:
