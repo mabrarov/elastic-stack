@@ -46,20 +46,26 @@ x-elasticsearch-master-nodes: &elasticsearch-master-nodes
 x-elasticsearch-data-conf: &elasticsearch-data-conf
   <<: *elasticsearch-master-nodes
   node.roles: "[ master, data, data_hot, ingest ]"
+  bootstrap.memory_lock: "true"
   xpack.security.enabled: "true"
+  xpack.security.http.ssl.enabled: "true"
+  xpack.security.http.ssl.certificate_authorities: "certs/ca/ca.crt"
+  xpack.security.transport.ssl.enabled: "true"
+  xpack.security.transport.ssl.certificate_authorities: "certs/ca/ca.crt"
+  xpack.security.transport.ssl.verification_mode: "certificate"
   xpack.license.self_generated.type: "trial"
   ELASTIC_USERNAME: *elasticsearch-username
   ELASTIC_PASSWORD: *elasticsearch-password
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
-  "http://elasticsearch4:9200"
+  "https://elasticsearch4:9200"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   test:
     - "CMD-SHELL"
-    - "curl -s -f -u \"$${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD}\" 'http://localhost:9200/_cluster/health?wait_for_status=green&timeout=20s' || exit 1"
+    - "curl -s --cacert config/certs/ca/ca.crt -f -u \"$${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD}\" 'https://localhost:9200/_cluster/health?wait_for_status=green&timeout=20s' || exit 1"
   interval: "30s"
   timeout: "25s"
   retries: 20
@@ -81,6 +87,7 @@ x-logging: &default-logging
     max-file: "5"
 
 volumes:
+  certs:
   elasticsearch1-data:
   elasticsearch2-data:
   elasticsearch3-data:
@@ -90,65 +97,145 @@ volumes:
 services:
   setup:
     image: *elasticsearch-image
+    user: "0"
     command:
       - "bash"
       - "-c"
       - |-
+        if [ ! -f config/certs/ca.zip ]; then
+          echo "Creating CA" &&
+          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip &&
+          unzip config/certs/ca.zip -d config/certs ;
+        fi &&
+        if [ ! -f config/certs/certs.zip ]; then
+          echo "Creating certs" &&
+          echo -ne \
+            "instances:\n"\
+            "  - name: elasticsearch1\n"\
+            "    dns:\n"\
+            "      - elasticsearch1\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            "  - name: elasticsearch2\n"\
+            "    dns:\n"\
+            "      - elasticsearch2\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            "  - name: elasticsearch3\n"\
+            "    dns:\n"\
+            "      - elasticsearch3\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            "  - name: elasticsearch4\n"\
+            "    dns:\n"\
+            "      - elasticsearch4\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
+            > config/certs/instances.yml &&
+          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key &&
+          unzip config/certs/certs.zip -d config/certs ;
+        fi &&
+        echo "Setting file permissions" &&
+        chown -R root:root config/certs &&
+        find . -type d -exec chmod 750 \{\} \; &&
+        find . -type f -exec chmod 640 \{\} \; &&
         echo "Waiting for Elasticsearch availability" &&
-        until curl -s "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
+        until curl -s --cacert config/certs/ca/ca.crt "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
         echo "Setting $${KIBANA_USERNAME} password" &&
-        until curl -s -X POST -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
         echo "All done!"
+    healthcheck:
+      # noinspection ComposeUnknownValues
+      test:
+        - "CMD-SHELL"
+        - "[ -f config/certs/elasticsearch1/elasticsearch1.crt ]"
+      interval: 1s
+      timeout: 5s
+      retries: 120
     environment:
       ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
       ELASTICSEARCH_API_USERNAME: *elasticsearch-username
       ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
       KIBANA_USERNAME: *kibana-username
       KIBANA_PASSWORD: *kibana-password
+    volumes:
+      - "certs:/usr/share/elasticsearch/config/certs"
+    logging: *default-logging
 
   elasticsearch1:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch1"
+      xpack.security.http.ssl.key: "certs/elasticsearch1/elasticsearch1.key"
+      xpack.security.http.ssl.certificate: "certs/elasticsearch1/elasticsearch1.crt"
+      xpack.security.transport.ssl.key: "certs/elasticsearch1/elasticsearch1.key"
+      xpack.security.transport.ssl.certificate: "certs/elasticsearch1/elasticsearch1.crt"
       <<: *elasticsearch-data-conf
     ports:
       - "9201:9200"
     volumes:
+      - "certs:/usr/share/elasticsearch/config/certs"
       - "elasticsearch1-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch2:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch2"
+      xpack.security.http.ssl.key: "certs/elasticsearch2/elasticsearch2.key"
+      xpack.security.http.ssl.certificate: "certs/elasticsearch2/elasticsearch2.crt"
+      xpack.security.transport.ssl.key: "certs/elasticsearch2/elasticsearch2.key"
+      xpack.security.transport.ssl.certificate: "certs/elasticsearch2/elasticsearch2.crt"
       <<: *elasticsearch-data-conf
     ports:
       - "9202:9200"
     volumes:
+      - "certs:/usr/share/elasticsearch/config/certs"
       - "elasticsearch2-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch3:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch3"
+      xpack.security.http.ssl.key: "certs/elasticsearch3/elasticsearch3.key"
+      xpack.security.http.ssl.certificate: "certs/elasticsearch3/elasticsearch3.crt"
+      xpack.security.transport.ssl.key: "certs/elasticsearch3/elasticsearch3.key"
+      xpack.security.transport.ssl.certificate: "certs/elasticsearch3/elasticsearch3.crt"
       <<: *elasticsearch-data-conf
     ports:
       - "9203:9200"
     volumes:
+      - "certs:/usr/share/elasticsearch/config/certs"
       - "elasticsearch3-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   elasticsearch4:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *elasticsearch-image
     mem_limit: "1024m"
     mem_reservation: "512m"
@@ -156,18 +243,31 @@ services:
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch4"
-      <<: *elasticsearch-master-nodes
+      xpack.security.http.ssl.key: "certs/elasticsearch4/elasticsearch4.key"
+      xpack.security.http.ssl.certificate: "certs/elasticsearch4/elasticsearch4.crt"
+      xpack.security.transport.ssl.key: "certs/elasticsearch4/elasticsearch4.key"
+      xpack.security.transport.ssl.certificate: "certs/elasticsearch4/elasticsearch4.crt"
       bootstrap.memory_lock: "true"
-      node.roles: "[ ]"
       xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "true"
+      xpack.security.http.ssl.certificate_authorities: "certs/ca/ca.crt"
+      xpack.security.transport.ssl.enabled: "true"
+      xpack.security.transport.ssl.certificate_authorities: "certs/ca/ca.crt"
+      xpack.security.transport.ssl.verification_mode: "certificate"
       xpack.license.self_generated.type: "trial"
+      node.roles: "[ ]"
       ELASTIC_USERNAME: *elasticsearch-username
       ELASTIC_PASSWORD: *elasticsearch-password
+      <<: *elasticsearch-master-nodes
     volumes:
+      - "certs:/usr/share/elasticsearch/config/certs"
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   kibana:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
@@ -176,7 +276,8 @@ services:
     environment:
       SERVER_PUBLICBASEURL: "http://localhost:5601"
       ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
-      xpack.security.enabled: "true"
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "config/certs/ca/ca.crt"
+      xpack.security.enabled: "false"
       ELASTICSEARCH_USERNAME: *kibana-username
       ELASTICSEARCH_PASSWORD: *kibana-password
       KIBANA_USERNAME: *elasticsearch-username
@@ -186,5 +287,6 @@ services:
     ports:
       - "5601:5601"
     volumes:
+      - "certs:/usr/share/kibana/config/certs"
       - "kibana-data:/usr/share/kibana/data"
     logging: *default-logging

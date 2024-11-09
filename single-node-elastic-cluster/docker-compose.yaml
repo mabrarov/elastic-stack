@@ -83,6 +83,7 @@ services:
       ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
       KIBANA_USERNAME: *kibana-username
       KIBANA_PASSWORD: *kibana-password
+    logging: *default-logging
 
   elasticsearch:
     image: *elasticsearch-image
