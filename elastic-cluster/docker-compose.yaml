@@ -1,7 +1,7 @@
 version: "2.1"
 
 x-elasticsearch-image: &elasticsearch-image
-  "elasticsearch:7.17.9"
+  "elasticsearch:8.15.3"
 
 x-elasticsearch-username: &elasticsearch-username
   "elastic"
@@ -116,7 +116,7 @@ services:
     logging: *default-logging
 
   kibana:
-    image: "kibana:7.17.9"
+    image: "kibana:8.15.3"
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
