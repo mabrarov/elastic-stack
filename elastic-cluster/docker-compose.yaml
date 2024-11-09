@@ -107,9 +107,6 @@ services:
       KIBANA_PASSWORD: *kibana-password
 
   elasticsearch1:
-    depends_on:
-      setup:
-        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
@@ -124,9 +121,6 @@ services:
     logging: *default-logging
 
   elasticsearch2:
-    depends_on:
-      setup:
-        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
@@ -141,9 +135,6 @@ services:
     logging: *default-logging
 
   elasticsearch3:
-    depends_on:
-      setup:
-        condition: "service_started"
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
@@ -158,13 +149,6 @@ services:
     logging: *default-logging
 
   elasticsearch4:
-    depends_on:
-      elasticsearch1:
-        condition: "service_healthy"
-      elasticsearch2:
-        condition: "service_healthy"
-      elasticsearch3:
-        condition: "service_healthy"
     image: *elasticsearch-image
     mem_limit: "1024m"
     mem_reservation: "512m"
@@ -184,9 +168,6 @@ services:
     logging: *default-logging
 
   kibana:
-    depends_on:
-      elasticsearch4:
-        condition: "service_healthy"
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
