@@ -177,8 +177,16 @@ services:
       # noinspection ComposeUnknownValues
       test:
         - "CMD-SHELL"
-        - "[ -f config/certs/elasticsearch1/elasticsearch1.crt ]"
-      interval: 1s
+        - |-
+          [ -f config/certs/elasticsearch1/elasticsearch1.crt ] &&
+          [ -f config/certs/elasticsearch1/elasticsearch1.key ] &&
+          [ -f config/certs/elasticsearch2/elasticsearch2.crt ] &&
+          [ -f config/certs/elasticsearch2/elasticsearch2.key ] &&
+          [ -f config/certs/elasticsearch3/elasticsearch3.crt ] &&
+          [ -f config/certs/elasticsearch3/elasticsearch3.key ] &&
+          [ -f config/certs/elasticsearch4/elasticsearch4.crt ] &&
+          [ -f config/certs/elasticsearch4/elasticsearch4.key ]
+      interval: 10s
       timeout: 5s
       retries: 120
     environment:
