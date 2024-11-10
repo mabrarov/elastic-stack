@@ -80,6 +80,10 @@ x-kibana-healthcheck: &kibana-healthcheck
   retries: 20
 
 # noinspection ComposeUnknownKeys
+x-elasticsearch-certs-volume: &elasticsearch-certs-volume
+  "certs:/usr/share/elasticsearch/config/certs:ro"
+
+# noinspection ComposeUnknownKeys
 x-logging: &default-logging
   driver: "json-file"
   options:
@@ -195,7 +199,7 @@ services:
     ports:
       - "9201:9200"
     volumes:
-      - "certs:/usr/share/elasticsearch/config/certs"
+      - *elasticsearch-certs-volume
       - "elasticsearch1-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
@@ -217,7 +221,7 @@ services:
     ports:
       - "9202:9200"
     volumes:
-      - "certs:/usr/share/elasticsearch/config/certs"
+      - *elasticsearch-certs-volume
       - "elasticsearch2-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
@@ -239,7 +243,7 @@ services:
     ports:
       - "9203:9200"
     volumes:
-      - "certs:/usr/share/elasticsearch/config/certs"
+      - *elasticsearch-certs-volume
       - "elasticsearch3-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
@@ -271,7 +275,7 @@ services:
       ELASTIC_PASSWORD: *elasticsearch-password
       <<: *elasticsearch-master-nodes
     volumes:
-      - "certs:/usr/share/elasticsearch/config/certs"
+      - *elasticsearch-certs-volume
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
@@ -298,6 +302,6 @@ services:
     ports:
       - "5601:5601"
     volumes:
-      - "certs:/usr/share/kibana/config/certs"
+      - "certs:/usr/share/kibana/config/certs:ro"
       - "kibana-data:/usr/share/kibana/data"
     logging: *default-logging
