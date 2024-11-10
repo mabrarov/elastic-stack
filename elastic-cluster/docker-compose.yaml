@@ -102,10 +102,17 @@ services:
       - "bash"
       - "-c"
       - |-
-        if [ ! -f config/certs/ca.zip ]; then
-          echo "Creating CA" &&
-          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip &&
-          unzip config/certs/ca.zip -d config/certs ;
+        if [ ! -f config/certs/ca/ca.key ] || [ ! -f config/certs/ca/ca.key ]; then
+          if [ -f "$${CUSTOM_CA_CERT_FILE}" ] && [ -f "$${CUSTOM_CA_KEY_FILE}" ]; then
+            echo "Copying provided CA" &&
+            mkdir -p config/certs/ca &&
+            cp "$${CUSTOM_CA_CERT_FILE}" config/certs/ca/ &&
+            cp "$${CUSTOM_CA_KEY_FILE}"  config/certs/ca/ ;
+          elif [ ! -f config/certs/ca.zip ]; then
+            echo "Creating CA" &&
+            bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip &&
+            unzip config/certs/ca.zip -d config/certs ;
+          fi ;
         fi &&
         if [ ! -f config/certs/certs.zip ]; then
           echo "Creating certs" &&
@@ -157,12 +164,16 @@ services:
       timeout: 5s
       retries: 120
     environment:
+      CUSTOM_CA_CERT_FILE: "/ca.crt"
+      CUSTOM_CA_KEY_FILE: "/ca.key"
       ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
       ELASTICSEARCH_API_USERNAME: *elasticsearch-username
       ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
       KIBANA_USERNAME: *kibana-username
       KIBANA_PASSWORD: *kibana-password
     volumes:
+      - '../certificates/ca_cert.crt:/ca.crt:ro'
+      - '../certificates/ca_private.pem:/ca.key:ro'
       - "certs:/usr/share/elasticsearch/config/certs"
     logging: *default-logging
 

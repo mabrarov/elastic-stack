@@ -13,7 +13,10 @@ elasticsearch_index_name="${elasticsearch_index_alias}-000001"
 kibana_index_pattern_id="${elasticsearch_index_alias}"
 kibana_index_pattern_title="${elasticsearch_index_alias}-*"
 
-response_status_code="$(curl -k -s -X PUT \
+this_path="$(cd "$(dirname "${0}")" &> /dev/null && pwd)"
+cacert_file="${this_path}/../certificates/ca_cert.crt"
+
+response_status_code="$(curl -s --cacert "${cacert_file}" -X PUT \
   -o /dev/null -w '%{http_code}\n' \
   --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
   -H 'Content-Type: application/json' \
@@ -56,7 +59,7 @@ fi
 
 for index_num in {2..4}; do
   elasticsearch_index_name="${elasticsearch_index_alias}-$(printf '%06d' "${index_num}")"
-  response_status_code="$(curl -k -s -X PUT \
+  response_status_code="$(curl -s --cacert "${cacert_file}" -X PUT \
     -o /dev/null -w '%{http_code}\n' \
     --user "${elasticsearch_api_user}:${elasticsearch_api_password}" \
     -H 'Content-Type: application/json' \
