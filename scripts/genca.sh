@@ -14,6 +14,7 @@ this_path="$(cd "$(dirname "${0}")" &> /dev/null && pwd)"
 # Path to OpenSSL
 openssl_bin="openssl"
 
+key_passphrase="private_key_passphrase"
 digest="sha512"
 bits="4096"
 days="7300"
@@ -112,12 +113,13 @@ echo "commonName = ${common_name}"
 ) > "${openssl_conf}"
 
 # Generate private key
-"${openssl_bin}" genrsa "${bits}" > "${key_file}"
+"${openssl_bin}" genrsa -passout "pass:${key_passphrase}" "${bits}" > "${key_file}"
 
 # Generate certificate request
 "${openssl_bin}" req \
   -new \
   -key "$(native_path "${key_file}")" \
+  -passin "pass:${key_passphrase}" \
   -config "$(native_path "${openssl_conf}")" \
   "-${digest}" \
   -out "$(native_path "${csr_file}")"
@@ -129,6 +131,7 @@ echo "commonName = ${common_name}"
   -out "$(native_path "${cert_file}")" \
   -days "${days}" \
   -keyfile "$(native_path "${key_file}")" \
+  -passin "pass:${key_passphrase}" \
   -selfsign \
   -extensions v3_ca \
   -config "$(native_path "${openssl_conf}")" \

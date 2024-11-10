@@ -27,6 +27,10 @@ x-kibana-password: &kibana-password
   "kibana_system"
 
 # noinspection ComposeUnknownKeys
+x-ca-key-passphrase: &ca-key-passphrase
+  "private_key_passphrase"
+
+# noinspection ComposeUnknownKeys
 x-ulimits: &default-ulimits
   memlock:
     soft: -1
@@ -107,16 +111,10 @@ services:
       - "-c"
       - |-
         if [ ! -f config/certs/ca/ca.key ] || [ ! -f config/certs/ca/ca.key ]; then
-          if [ -f "$${CUSTOM_CA_CERT_FILE}" ] && [ -f "$${CUSTOM_CA_KEY_FILE}" ]; then
-            echo "Copying provided CA" &&
-            mkdir -p config/certs/ca &&
-            cp "$${CUSTOM_CA_CERT_FILE}" config/certs/ca/ &&
-            cp "$${CUSTOM_CA_KEY_FILE}"  config/certs/ca/ ;
-          elif [ ! -f config/certs/ca.zip ]; then
-            echo "Creating CA" &&
-            bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip &&
-            unzip config/certs/ca.zip -d config/certs ;
-          fi ;
+          echo "Copying provided CA" &&
+          mkdir -p config/certs/ca &&
+          cp "$${CA_CERT_FILE}" config/certs/ca/ &&
+          cp "$${CA_KEY_FILE}"  config/certs/ca/ ;
         fi &&
         if [ ! -f config/certs/certs.zip ]; then
           echo "Creating certs" &&
@@ -147,7 +145,12 @@ services:
             "    ip:\n"\
             "      - 127.0.0.1\n"\
             > config/certs/instances.yml &&
-          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key &&
+          bin/elasticsearch-certutil cert --silent --pem \
+            --in config/certs/instances.yml \
+            --out config/certs/certs.zip \
+            --ca-cert config/certs/ca/ca.crt \
+            --ca-key config/certs/ca/ca.key \
+            --ca-pass "$${CA_KEY_PASSPHRASE}" &&
           unzip config/certs/certs.zip -d config/certs ;
         fi &&
         echo "Setting file permissions" &&
@@ -155,9 +158,20 @@ services:
         find . -type d -exec chmod 750 \{\} \; &&
         find . -type f -exec chmod 640 \{\} \; &&
         echo "Waiting for Elasticsearch availability" &&
-        until curl -s --cacert config/certs/ca/ca.crt "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
+        until curl -s -f --cacert config/certs/ca/ca.crt \
+          -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" \
+          -o /dev/null \
+          "$${ELASTICSEARCH_API_ENDPOINT}/_cluster/health?wait_for_status=green&timeout=20s"; do
+          sleep 10; 
+        done &&
         echo "Setting $${KIBANA_USERNAME} password" &&
-        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
+        until curl -s -f --cacert config/certs/ca/ca.crt \
+          -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" \
+          -X POST -H "Content-Type: application/json" \
+          "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" \
+          -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do
+          sleep 10;
+        done &&
         echo "All done!"
     healthcheck:
       # noinspection ComposeUnknownValues
@@ -168,8 +182,9 @@ services:
       timeout: 5s
       retries: 120
     environment:
-      CUSTOM_CA_CERT_FILE: "/ca.crt"
-      CUSTOM_CA_KEY_FILE: "/ca.key"
+      CA_CERT_FILE: "/ca.crt"
+      CA_KEY_FILE: "/ca.key"
+      CA_KEY_PASSPHRASE: *ca-key-passphrase
       ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
       ELASTICSEARCH_API_USERNAME: *elasticsearch-username
       ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
