@@ -303,9 +303,6 @@ services:
     logging: *default-logging
 
   kibana:
-    depends_on:
-      setup:
-        condition: "service_healthy"
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
