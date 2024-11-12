@@ -1,16 +1,60 @@
-version: "2.1"
+version: "2.2"
 
+# Refer to https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/docker-compose.yml
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-image: &elasticsearch-image
+  "elasticsearch:8.15.3"
+
+# noinspection ComposeUnknownKeys
+x-kibana-image: &kibana-image
+  "kibana:8.15.3"
+
+# noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
   "elastic"
 
+# noinspection ComposeUnknownKeys
 x-elasticsearch-password: &elasticsearch-password
   "elastic"
 
+# noinspection ComposeUnknownKeys
+x-kibana-username: &kibana-username
+  "kibana_system"
+
+# noinspection ComposeUnknownKeys
+x-kibana-password: &kibana-password
+  "kibana_system"
+
+# noinspection ComposeUnknownKeys
 x-ulimits: &default-ulimits
   memlock:
     soft: -1
     hard: -1
 
+# noinspection ComposeUnknownKeys
+x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
+  "http://elasticsearch:9200"
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-healthcheck: &elasticsearch-healthcheck
+  test:
+    - "CMD-SHELL"
+    - "curl -s -f -u \"$${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD}\" 'http://localhost:9200/_cluster/health?wait_for_status=green&timeout=20s' || exit 1"
+  interval: "30s"
+  timeout: "25s"
+  retries: 20
+
+# noinspection ComposeUnknownKeys
+x-kibana-healthcheck: &kibana-healthcheck
+  test:
+    - "CMD-SHELL"
+    - "curl -s -f -u \"$${KIBANA_USERNAME}:$${KIBANA_PASSWORD}\" 'http://localhost:5601/api/task_manager/_health' || exit 1"
+  interval: "30s"
+  timeout: "25s"
+  retries: 20
+
+# noinspection ComposeUnknownKeys
 x-logging: &default-logging
   driver: "json-file"
   options:
@@ -22,14 +66,35 @@ volumes:
   kibana-data:
 
 services:
+  setup:
+    image: *elasticsearch-image
+    command:
+      - "bash"
+      - "-c"
+      - |-
+        echo "Waiting for Elasticsearch availability" &&
+        until curl -s "$${ELASTICSEARCH_API_ENDPOINT}" | grep -q "missing authentication credentials"; do sleep 30; done &&
+        echo "Setting $${KIBANA_USERNAME} password" &&
+        until curl -s -X POST -u "$${ELASTICSEARCH_API_USERNAME}:$${ELASTICSEARCH_API_PASSWORD}" -H "Content-Type: application/json" "$${ELASTICSEARCH_API_ENDPOINT}/_security/user/$${KIBANA_USERNAME}/_password" -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done &&
+        echo "All done!"
+    environment:
+      ELASTICSEARCH_API_ENDPOINT: *elasticsearch-api-endpoint
+      ELASTICSEARCH_API_USERNAME: *elasticsearch-username
+      ELASTICSEARCH_API_PASSWORD: *elasticsearch-password
+      KIBANA_USERNAME: *kibana-username
+      KIBANA_PASSWORD: *kibana-password
+    logging: *default-logging
+
   elasticsearch:
-    image: "elasticsearch:7.17.9"
+    image: *elasticsearch-image
     mem_limit: "2048m"
     mem_reservation: "1024m"
     ulimits: *default-ulimits
+    healthcheck: *elasticsearch-healthcheck
     environment:
       discovery.type: "single-node"
       xpack.security.enabled: "true"
+      ELASTIC_USERNAME: *elasticsearch-username
       ELASTIC_PASSWORD: *elasticsearch-password
       node.attr.data: "hot"
     ports:
@@ -39,16 +104,19 @@ services:
     logging: *default-logging
 
   kibana:
-    image: "kibana:7.17.9"
+    image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    healthcheck: *kibana-healthcheck
     environment:
       SERVER_PUBLICBASEURL: "http://localhost:5601"
-      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
       xpack.security.enabled: "true"
-      ELASTICSEARCH_USERNAME: *elasticsearch-username
-      ELASTICSEARCH_PASSWORD: *elasticsearch-password
+      ELASTICSEARCH_USERNAME: *kibana-username
+      ELASTICSEARCH_PASSWORD: *kibana-password
+      KIBANA_USERNAME: *elasticsearch-username
+      KIBANA_PASSWORD: *elasticsearch-password
       TELEMETRY_ENABLED: "false"
       NEWSFEED_ENABLED: "false"
     ports:
