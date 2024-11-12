@@ -113,7 +113,7 @@ echo "commonName = ${common_name}"
 ) > "${openssl_conf}"
 
 # Generate private key
-"${openssl_bin}" genrsa -passout "pass:${key_passphrase}" "${bits}" > "${key_file}"
+"${openssl_bin}" genrsa -aes128 -passout "pass:${key_passphrase}" -out "$(native_path "${key_file}")" "${bits}"
 
 # Generate certificate request
 "${openssl_bin}" req \
