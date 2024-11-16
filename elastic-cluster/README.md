@@ -2,11 +2,65 @@
 
 Docker Compose project for Elastic cluster consisting of:
 
-1. 3 master / data / ingesting Elasticsearch nodes.
-1. 1 [coordinating only](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#coordinating-only-node) Elasticsearch node.
-1. 1 Kibana instance.
+1. 3 master-eligible / data / ingesting Elasticsearch nodes.
+1. 2 [coordinating only](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#coordinating-only-node) Elasticsearch nodes.
+1. 2 Kibana instances.
+1. HAProxy load balancer in front of Kibana instances.
 
-Useful commands for [Kibana Dev Tools](http://localhost:5601/app/dev_tools#/console):
+```text
+                      ┌─────────────────────────────┐
+                      │                             │
+                      │         Kibana user         │
+                      │                             │
+                      └──────────────┬──────────────┘
+                                     │
+                      ┌──────────────▼──────────────┐
+                      │       kibana-balancer       │
+                      │                             │
+                      │          (HAProxy)          │
+                      └──────────────┬──────────────┘
+                                     │
+                  ┌──────────────────▼──────────────────┐
+                  │                                     │
+   ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐
+   │                             │       │                             │
+   │           kibana1           │       │           kibana2           │
+   │                             │       │                             │
+   └──────────────┬──────────────┘       └──────────────┬──────────────┘
+                  │                                     │
+                  └──────────────────▼──────────────────┘
+                                     │
+┌────────────────────────────────────│────────────────────────────────────┐
+│                                    │                                    │
+│                 ┌──────────────────▼──────────────────┐                 │
+│                 │                                     │                 │
+│  ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐  │
+│  │       elasticsearch4        │       │       elasticsearch5        │  │
+│  │                             │       │                             │  │
+│  │     (coordinating node)     │       │     (coordinating node)     │  │
+│  └─────────────────────────────┘       └─────────────────────────────┘  │
+│                     ┌─────────────────────────────┐                     │
+│                     │       elasticsearch1        │                     │
+│                     │                             │                     │
+│                     │ (master-eligible data node) │                     │
+│                     └─────────────────────────────┘                     │
+│                     ┌─────────────────────────────┐                     │
+│                     │       elasticsearch2        │                     │
+│                     │                             │                     │
+│                     │ (master-eligible data node) │                     │
+│                     └─────────────────────────────┘                     │
+│                     ┌─────────────────────────────┐                     │
+│                     │       elasticsearch3        │                     │
+│                     │                             │                     │
+│                     │ (master-eligible data node) │                     │
+│                     └─────────────────────────────┘                     │
+│                                                                         │
+│                          Elasticsearch cluster                          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+Useful commands for [Kibana Dev Tools](http://localhost/app/dev_tools#/console):
 
 ```text
 GET _cat/nodes?v
