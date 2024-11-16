@@ -89,6 +89,21 @@ x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   retries: 20
 
 # noinspection ComposeUnknownKeys
+x-kibana-conf: &kibana-conf
+  SERVER_PUBLICBASEURL: "http://localhost"
+  ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
+  ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "config/certs/ca/ca.crt"
+  XPACK_SECURITY_ENCRYPTIONKEY: "110209afc93b2ab4e788f008f67bf68e"
+  XPACK_REPORTING_ENCRYPTIONKEY: "250ce20fab7ab03fee8f012f254cfe8f"
+  XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "b5feb0423c3f2927b6febb74876a5a71"
+  ELASTICSEARCH_USERNAME: *kibana-username
+  ELASTICSEARCH_PASSWORD: *kibana-password
+  KIBANA_USERNAME: *elasticsearch-username
+  KIBANA_PASSWORD: *elasticsearch-password
+  TELEMETRY_ENABLED: "false"
+  NEWSFEED_ENABLED: "false"
+
+# noinspection ComposeUnknownKeys
 x-kibana-entrypoint: &kibana-entrypoint
   - "/bin/tini"
   - "-e"
@@ -115,6 +130,10 @@ x-elasticsearch-certs-volume: &elasticsearch-certs-volume
   "certs:/usr/share/elasticsearch/config/certs:ro"
 
 # noinspection ComposeUnknownKeys
+x-kibana-certs-volume: &kibana-certs-volume
+  "certs:/usr/share/kibana/config/certs:ro"
+
+# noinspection ComposeUnknownKeys
 x-logging: &default-logging
   driver: "json-file"
   options:
@@ -127,7 +146,8 @@ volumes:
   elasticsearch2-data:
   elasticsearch3-data:
   elasticsearch4-data:
-  kibana-data:
+  kibana1-data:
+  kibana2-data:
 
 services:
   setup:
@@ -337,7 +357,7 @@ services:
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
-  kibana:
+  kibana1:
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
@@ -346,19 +366,41 @@ services:
     command: *kibana-command
     healthcheck: *kibana-healthcheck
     environment:
-      SERVER_PUBLICBASEURL: "http://localhost:5601"
-      ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
-      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "config/certs/ca/ca.crt"
-      xpack.security.enabled: "false"
-      ELASTICSEARCH_USERNAME: *kibana-username
-      ELASTICSEARCH_PASSWORD: *kibana-password
-      KIBANA_USERNAME: *elasticsearch-username
-      KIBANA_PASSWORD: *elasticsearch-password
-      TELEMETRY_ENABLED: "false"
-      NEWSFEED_ENABLED: "false"
-    ports:
-      - "5601:5601"
+      <<: *kibana-conf
     volumes:
-      - "certs:/usr/share/kibana/config/certs:ro"
-      - "kibana-data:/usr/share/kibana/data"
+      - *kibana-certs-volume
+      - "kibana1-data:/usr/share/kibana/data"
+    logging: *default-logging
+
+  kibana2:
+    image: *kibana-image
+    mem_limit: "1024m"
+    mem_reservation: "512m"
+    ulimits: *default-ulimits
+    entrypoint: *kibana-entrypoint
+    command: *kibana-command
+    healthcheck: *kibana-healthcheck
+    environment:
+      <<: *kibana-conf
+    volumes:
+      - *kibana-certs-volume
+      - "kibana2-data:/usr/share/kibana/data"
+    logging: *default-logging
+
+  kibana-balancer:
+    build: "kibana-balancer"
+    image: "abrarov/elastic-stack-kibana-balancer"
+    environment:
+      BACKEND_CHECK_URI: "/api/task_manager/_health"
+      BACKEND_CHECK_USER_AGENT: "balancer"
+      BACKEND_CHECK_BASIC_AUTH: "ZWxhc3RpYzplbGFzdGlj"
+      BACKEND_CHECK_INTER: "10s"
+      STICKINESS_COOKIE_NAME: "kibana-balancer"
+      STICKINESS_COOKIE_SECRET: "some-secret-used-for-encryption-of-stickiness-cookie"
+      BACKEND1_HOST: "kibana1"
+      BACKEND1_PORT: "5601"
+      BACKEND2_HOST: "kibana2"
+      BACKEND2_PORT: "5601"
+    ports:
+      - "80:8080"
     logging: *default-logging

@@ -6,7 +6,9 @@ Docker Compose project for Elastic cluster consisting of:
 1. 1 coordinating Elasticsearch node.
 1. 1 Kibana node
 
-Useful commands for [Kibana Dev Tools](http://localhost:5601/app/dev_tools#/console):
+## Kibana Dev Tools Console
+
+Useful commands for [Kibana Dev Tools](http://localhost/app/dev_tools#/console):
 
 ```text
 GET _cat/nodes?v
@@ -123,4 +125,10 @@ PUT /fluent-bit-000004
     }
   }
 }
+```
+
+## Cleanup
+
+```bash
+docker rmi abrarov/elastic-stack-kibana-balancer
 ```
