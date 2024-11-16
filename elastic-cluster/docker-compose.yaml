@@ -105,7 +105,7 @@ x-kibana-command: &kibana-command
 x-kibana-healthcheck: &kibana-healthcheck
   test:
     - "CMD-SHELL"
-    - "curl -s -f -u \"$${KIBANA_USERNAME}:$${KIBANA_PASSWORD}\" 'http://localhost:5601/api/task_manager/_health' || exit 1"
+    - "curl -s -f -u \"$${KIBANA_USERNAME}:$${KIBANA_PASSWORD}\" 'http://localhost:5601/api/status' || exit 1"
   interval: "30s"
   timeout: "25s"
   retries: 20
@@ -227,8 +227,8 @@ services:
       KIBANA_USERNAME: *kibana-username
       KIBANA_PASSWORD: *kibana-password
     volumes:
-      - '../certificates/ca_cert.crt:/ca.crt:ro'
-      - '../certificates/ca_private.pem:/ca.key:ro'
+      - '${COMPOSE_PROJECT_DIRECTORY:-.}/../certificates/ca_cert.crt:/ca.crt:ro'
+      - '${COMPOSE_PROJECT_DIRECTORY:-.}/../certificates/ca_private.pem:/ca.key:ro'
       - "certs:/usr/share/elasticsearch/config/certs"
     logging: *default-logging
 
