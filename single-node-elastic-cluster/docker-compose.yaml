@@ -116,6 +116,7 @@ services:
     image: *elasticsearch-image
     mem_limit: "2048m"
     mem_reservation: "1024m"
+    cpus: 2
     ulimits: *default-ulimits
     entrypoint: *elasticsearch-entrypoint
     command: *elasticsearch-command
@@ -136,6 +137,7 @@ services:
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
+    cpus: 2
     ulimits: *default-ulimits
     entrypoint: *kibana-entrypoint
     command: *kibana-command
