@@ -405,11 +405,15 @@ services:
     mem_reservation: "64m"
     ulimits: *default-ulimits
     environment:
+      CLIENT_TIMEOUT: "150s"
+      SERVER_TIMEOUT: "120s"
       BACKEND_CHECK_URI: "/api/task_manager/_health"
       BACKEND_CHECK_USER_AGENT: "balancer"
       # Base64("elastic:elastic")
       BACKEND_CHECK_BASIC_AUTH: "ZWxhc3RpYzplbGFzdGlj"
       BACKEND_CHECK_INTER: "10s"
+      BACKEND_CHECK_FALL: "1"
+      BACKEND_CHECK_RISE: "1"
       STICKINESS_COOKIE_NAME: "kibana-balancer"
       STICKINESS_COOKIE_SECRET: "some-secret-used-for-encryption-of-stickiness-cookie"
       BACKEND1_HOST: "kibana1"
