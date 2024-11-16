@@ -388,8 +388,7 @@ services:
     logging: *default-logging
 
   kibana-balancer:
-    build: "kibana-balancer"
-    image: "abrarov/elastic-stack-kibana-balancer"
+    image: "haproxy:alpine"
     environment:
       BACKEND_CHECK_URI: "/api/task_manager/_health"
       BACKEND_CHECK_USER_AGENT: "balancer"
@@ -403,4 +402,6 @@ services:
       BACKEND2_PORT: "5601"
     ports:
       - "80:8080"
+    volumes:
+      - "./kibana-balancer/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
     logging: *default-logging
