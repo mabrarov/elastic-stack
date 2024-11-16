@@ -66,6 +66,20 @@ x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "https://elasticsearch4:9200"
 
 # noinspection ComposeUnknownKeys
+x-elasticsearch-entrypoint: &elasticsearch-entrypoint
+  - "/bin/tini"
+  - "-e"
+  - "130"
+  - "-e"
+  - "143"
+  - "--"
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-command: &elasticsearch-command
+  - "/usr/local/bin/docker-entrypoint.sh"
+  - "eswrapper"
+
+# noinspection ComposeUnknownKeys
 x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   test:
     - "CMD-SHELL"
@@ -73,6 +87,19 @@ x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   interval: "30s"
   timeout: "25s"
   retries: 20
+
+# noinspection ComposeUnknownKeys
+x-kibana-entrypoint: &kibana-entrypoint
+  - "/bin/tini"
+  - "-e"
+  - "130"
+  - "-e"
+  - "143"
+  - "--"
+
+# noinspection ComposeUnknownKeys
+x-kibana-command: &kibana-command
+  - "/usr/local/bin/kibana-docker"
 
 # noinspection ComposeUnknownKeys
 x-kibana-healthcheck: &kibana-healthcheck
@@ -172,7 +199,8 @@ services:
           -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do
           sleep 10;
         done &&
-        echo "All done!"
+        echo "All done!" &&
+        sleep 10
     healthcheck:
       # noinspection ComposeUnknownValues
       test:
@@ -186,7 +214,7 @@ services:
           [ -f config/certs/elasticsearch3/elasticsearch3.key ] &&
           [ -f config/certs/elasticsearch4/elasticsearch4.crt ] &&
           [ -f config/certs/elasticsearch4/elasticsearch4.key ]
-      interval: 10s
+      interval: 1s
       timeout: 5s
       retries: 120
     environment:
@@ -211,6 +239,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch1"
@@ -233,6 +263,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch2"
@@ -255,6 +287,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch3"
@@ -278,6 +312,8 @@ services:
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch4"
@@ -297,16 +333,23 @@ services:
       ELASTIC_USERNAME: *elasticsearch-username
       ELASTIC_PASSWORD: *elasticsearch-password
       <<: *elasticsearch-master-nodes
+    ports:
+      - "9204:9200"
     volumes:
       - *elasticsearch-certs-volume
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   kibana:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    entrypoint: *kibana-entrypoint
+    command: *kibana-command
     healthcheck: *kibana-healthcheck
     environment:
       SERVER_PUBLICBASEURL: "http://localhost:5601"
