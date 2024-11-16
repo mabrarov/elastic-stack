@@ -227,8 +227,8 @@ services:
       KIBANA_USERNAME: *kibana-username
       KIBANA_PASSWORD: *kibana-password
     volumes:
-      - '../certificates/ca_cert.crt:/ca.crt:ro'
-      - '../certificates/ca_private.pem:/ca.key:ro'
+      - '${COMPOSE_PROJECT_DIRECTORY:-.}/../certificates/ca_cert.crt:/ca.crt:ro'
+      - '${COMPOSE_PROJECT_DIRECTORY:-.}/../certificates/ca_private.pem:/ca.key:ro'
       - "certs:/usr/share/elasticsearch/config/certs"
     logging: *default-logging
 
