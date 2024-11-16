@@ -37,7 +37,7 @@ Docker Compose project for Elastic cluster consisting of:
 │  ┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐  │
 │  │       elasticsearch4        │       │       elasticsearch5        │  │
 │  │                             │       │                             │  │
-│  │     (coordinating node)     │       │     (coordinating node)     │  │
+│  │  (coordinating only node)   │       │  (coordinating only node)   │  │
 │  └─────────────────────────────┘       └─────────────────────────────┘  │
 │                     ┌─────────────────────────────┐                     │
 │                     │       elasticsearch1        │                     │
