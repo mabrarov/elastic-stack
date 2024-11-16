@@ -6,7 +6,7 @@ DOCKER_HOST='localhost'
 
 elasticsearch_api_user='elastic'
 elasticsearch_api_password='elastic'
-elasticsearch_api_url_base="https://${DOCKER_HOST}:9201"
+elasticsearch_api_url_base="https://${DOCKER_HOST}:9204"
 kibana_api_url_base="http://${DOCKER_HOST}"
 elasticsearch_index_alias="fluent-bit"
 elasticsearch_index_name="${elasticsearch_index_alias}-000001"
