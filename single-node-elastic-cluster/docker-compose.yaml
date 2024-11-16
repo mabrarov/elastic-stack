@@ -37,6 +37,20 @@ x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "http://elasticsearch:9200"
 
 # noinspection ComposeUnknownKeys
+x-elasticsearch-entrypoint: &elasticsearch-entrypoint
+  - "/bin/tini"
+  - "-e"
+  - "130"
+  - "-e"
+  - "143"
+  - "--"
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-command: &elasticsearch-command
+  - "/usr/local/bin/docker-entrypoint.sh"
+  - "eswrapper"
+
+# noinspection ComposeUnknownKeys
 x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   test:
     - "CMD-SHELL"
@@ -90,6 +104,8 @@ services:
     mem_limit: "2048m"
     mem_reservation: "1024m"
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       discovery.type: "single-node"

@@ -66,6 +66,20 @@ x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "https://elasticsearch4:9200"
 
 # noinspection ComposeUnknownKeys
+x-elasticsearch-entrypoint: &elasticsearch-entrypoint
+  - "/bin/tini"
+  - "-e"
+  - "130"
+  - "-e"
+  - "143"
+  - "--"
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-command: &elasticsearch-command
+  - "/usr/local/bin/docker-entrypoint.sh"
+  - "eswrapper"
+
+# noinspection ComposeUnknownKeys
 x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   test:
     - "CMD-SHELL"
@@ -211,6 +225,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch1"
@@ -233,6 +249,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch2"
@@ -255,6 +273,8 @@ services:
     image: *elasticsearch-image
     <<: *elasticsearch-data-node-limits
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch3"
@@ -278,6 +298,8 @@ services:
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
     healthcheck: *elasticsearch-healthcheck
     environment:
       node.name: "elasticsearch4"
