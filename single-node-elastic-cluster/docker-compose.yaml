@@ -76,7 +76,7 @@ x-kibana-command: &kibana-command
 x-kibana-healthcheck: &kibana-healthcheck
   test:
     - "CMD-SHELL"
-    - "curl -s -f -u \"$${KIBANA_USERNAME}:$${KIBANA_PASSWORD}\" 'http://localhost:5601/api/task_manager/_health' || exit 1"
+    - "curl -s -f -u \"$${KIBANA_USERNAME}:$${KIBANA_PASSWORD}\" 'http://localhost:5601/api/status' || exit 1"
   interval: "30s"
   timeout: "25s"
   retries: 20
