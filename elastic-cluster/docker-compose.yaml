@@ -333,6 +333,8 @@ services:
       ELASTIC_USERNAME: *elasticsearch-username
       ELASTIC_PASSWORD: *elasticsearch-password
       <<: *elasticsearch-master-nodes
+    ports:
+      - "9204:9200"
     volumes:
       - *elasticsearch-certs-volume
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
