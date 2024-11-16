@@ -407,7 +407,7 @@ services:
     environment:
       CLIENT_TIMEOUT: "150s"
       SERVER_TIMEOUT: "120s"
-      BACKEND_CHECK_URI: "/api/task_manager/_health"
+      BACKEND_CHECK_URI: "/api/status"
       BACKEND_CHECK_USER_AGENT: "balancer"
       # Base64("elastic:elastic")
       BACKEND_CHECK_BASIC_AUTH: "ZWxhc3RpYzplbGFzdGlj"
