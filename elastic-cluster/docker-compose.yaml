@@ -89,6 +89,11 @@ x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   retries: 20
 
 # noinspection ComposeUnknownKeys
+x-kibana-limits: &kibana-limits
+  mem_limit: "1024m"
+  mem_reservation: "512m"
+
+# noinspection ComposeUnknownKeys
 x-kibana-conf: &kibana-conf
   SERVER_PUBLICBASEURL: "http://localhost"
   ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
@@ -365,8 +370,7 @@ services:
       setup:
         condition: "service_healthy"
     image: *kibana-image
-    mem_limit: "1024m"
-    mem_reservation: "512m"
+    <<: *kibana-limits
     ulimits: *default-ulimits
     entrypoint: *kibana-entrypoint
     command: *kibana-command
@@ -383,8 +387,7 @@ services:
       setup:
         condition: "service_healthy"
     image: *kibana-image
-    mem_limit: "1024m"
-    mem_reservation: "512m"
+    <<: *kibana-limits
     ulimits: *default-ulimits
     entrypoint: *kibana-entrypoint
     command: *kibana-command
@@ -398,6 +401,9 @@ services:
 
   kibana-balancer:
     image: "haproxy:alpine"
+    mem_limit: "256m"
+    mem_reservation: "64m"
+    ulimits: *default-ulimits
     environment:
       BACKEND_CHECK_URI: "/api/task_manager/_health"
       BACKEND_CHECK_USER_AGENT: "balancer"
