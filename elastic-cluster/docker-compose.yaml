@@ -205,6 +205,7 @@ services:
       test:
         - "CMD-SHELL"
         - |-
+          [ -f config/certs/ca/ca.crt ] &&
           [ -f config/certs/elasticsearch1/elasticsearch1.crt ] &&
           [ -f config/certs/elasticsearch1/elasticsearch1.key ] &&
           [ -f config/certs/elasticsearch2/elasticsearch2.crt ] &&
@@ -338,6 +339,9 @@ services:
     logging: *default-logging
 
   kibana:
+    depends_on:
+      setup:
+        condition: "service_healthy"
     image: *kibana-image
     mem_limit: "1024m"
     mem_reservation: "512m"
