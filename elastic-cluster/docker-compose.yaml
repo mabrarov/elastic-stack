@@ -62,6 +62,26 @@ x-elasticsearch-data-conf: &elasticsearch-data-conf
   ELASTIC_PASSWORD: *elasticsearch-password
 
 # noinspection ComposeUnknownKeys
+x-elasticsearch-coordinating-node-limits: &elasticsearch-coordinating-node-limits
+  mem_limit: "1024m"
+  mem_reservation: "512m"
+
+# noinspection ComposeUnknownKeys
+x-elasticsearch-coordinating-conf: &elasticsearch-coordinating-conf
+  <<: *elasticsearch-master-nodes
+  bootstrap.memory_lock: "true"
+  xpack.security.enabled: "true"
+  xpack.security.http.ssl.enabled: "true"
+  xpack.security.http.ssl.certificate_authorities: "certs/ca/ca.crt"
+  xpack.security.transport.ssl.enabled: "true"
+  xpack.security.transport.ssl.certificate_authorities: "certs/ca/ca.crt"
+  xpack.security.transport.ssl.verification_mode: "certificate"
+  xpack.license.self_generated.type: "trial"
+  node.roles: "[ ]"
+  ELASTIC_USERNAME: *elasticsearch-username
+  ELASTIC_PASSWORD: *elasticsearch-password
+
+# noinspection ComposeUnknownKeys
 x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "https://elasticsearch4:9200"
 
@@ -96,7 +116,7 @@ x-kibana-limits: &kibana-limits
 # noinspection ComposeUnknownKeys
 x-kibana-conf: &kibana-conf
   SERVER_PUBLICBASEURL: "http://localhost"
-  ELASTICSEARCH_HOSTS: *elasticsearch-api-endpoint
+  ELASTICSEARCH_HOSTS: "[\"https://elasticsearch4:9200\",\"https://elasticsearch5:9200\"]"
   ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: "config/certs/ca/ca.crt"
   XPACK_SECURITY_ENCRYPTIONKEY: "110209afc93b2ab4e788f008f67bf68e"
   XPACK_REPORTING_ENCRYPTIONKEY: "250ce20fab7ab03fee8f012f254cfe8f"
@@ -151,6 +171,7 @@ volumes:
   elasticsearch2-data:
   elasticsearch3-data:
   elasticsearch4-data:
+  elasticsearch5-data:
   kibana1-data:
   kibana2-data:
 
@@ -196,6 +217,12 @@ services:
             "      - localhost\n"\
             "    ip:\n"\
             "      - 127.0.0.1\n"\
+            "  - name: elasticsearch5\n"\
+            "    dns:\n"\
+            "      - elasticsearch5\n"\
+            "      - localhost\n"\
+            "    ip:\n"\
+            "      - 127.0.0.1\n"\
             > config/certs/instances.yml &&
           bin/elasticsearch-certutil cert --silent --pem \
             --in config/certs/instances.yml \
@@ -238,7 +265,9 @@ services:
           [ -f config/certs/elasticsearch3/elasticsearch3.crt ] &&
           [ -f config/certs/elasticsearch3/elasticsearch3.key ] &&
           [ -f config/certs/elasticsearch4/elasticsearch4.crt ] &&
-          [ -f config/certs/elasticsearch4/elasticsearch4.key ]
+          [ -f config/certs/elasticsearch4/elasticsearch4.key ] &&
+          [ -f config/certs/elasticsearch5/elasticsearch5.crt ] &&
+          [ -f config/certs/elasticsearch5/elasticsearch5.key ]
       interval: 1s
       timeout: 5s
       retries: 120
@@ -334,8 +363,7 @@ services:
       setup:
         condition: "service_healthy"
     image: *elasticsearch-image
-    mem_limit: "1024m"
-    mem_reservation: "512m"
+    <<: *elasticsearch-coordinating-node-limits
     ulimits: *default-ulimits
     entrypoint: *elasticsearch-entrypoint
     command: *elasticsearch-command
@@ -346,23 +374,36 @@ services:
       xpack.security.http.ssl.certificate: "certs/elasticsearch4/elasticsearch4.crt"
       xpack.security.transport.ssl.key: "certs/elasticsearch4/elasticsearch4.key"
       xpack.security.transport.ssl.certificate: "certs/elasticsearch4/elasticsearch4.crt"
-      bootstrap.memory_lock: "true"
-      xpack.security.enabled: "true"
-      xpack.security.http.ssl.enabled: "true"
-      xpack.security.http.ssl.certificate_authorities: "certs/ca/ca.crt"
-      xpack.security.transport.ssl.enabled: "true"
-      xpack.security.transport.ssl.certificate_authorities: "certs/ca/ca.crt"
-      xpack.security.transport.ssl.verification_mode: "certificate"
-      xpack.license.self_generated.type: "trial"
-      node.roles: "[ ]"
-      ELASTIC_USERNAME: *elasticsearch-username
-      ELASTIC_PASSWORD: *elasticsearch-password
-      <<: *elasticsearch-master-nodes
+      <<: *elasticsearch-coordinating-conf
     ports:
       - "9204:9200"
     volumes:
       - *elasticsearch-certs-volume
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
+    logging: *default-logging
+
+  elasticsearch5:
+    depends_on:
+      setup:
+        condition: "service_healthy"
+    image: *elasticsearch-image
+    <<: *elasticsearch-coordinating-node-limits
+    ulimits: *default-ulimits
+    entrypoint: *elasticsearch-entrypoint
+    command: *elasticsearch-command
+    healthcheck: *elasticsearch-healthcheck
+    environment:
+      node.name: "elasticsearch5"
+      xpack.security.http.ssl.key: "certs/elasticsearch5/elasticsearch5.key"
+      xpack.security.http.ssl.certificate: "certs/elasticsearch5/elasticsearch5.crt"
+      xpack.security.transport.ssl.key: "certs/elasticsearch5/elasticsearch5.key"
+      xpack.security.transport.ssl.certificate: "certs/elasticsearch5/elasticsearch5.crt"
+      <<: *elasticsearch-coordinating-conf
+    ports:
+      - "9205:9200"
+    volumes:
+      - *elasticsearch-certs-volume
+      - "elasticsearch5-data:/usr/share/elasticsearch/data"
     logging: *default-logging
 
   kibana1:
