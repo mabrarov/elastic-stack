@@ -60,6 +60,19 @@ x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   retries: 20
 
 # noinspection ComposeUnknownKeys
+x-kibana-entrypoint: &kibana-entrypoint
+  - "/bin/tini"
+  - "-e"
+  - "130"
+  - "-e"
+  - "143"
+  - "--"
+
+# noinspection ComposeUnknownKeys
+x-kibana-command: &kibana-command
+  - "/usr/local/bin/kibana-docker"
+
+# noinspection ComposeUnknownKeys
 x-kibana-healthcheck: &kibana-healthcheck
   test:
     - "CMD-SHELL"
@@ -124,6 +137,8 @@ services:
     mem_limit: "1024m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
+    entrypoint: *kibana-entrypoint
+    command: *kibana-command
     healthcheck: *kibana-healthcheck
     environment:
       SERVER_PUBLICBASEURL: "http://localhost:5601"
