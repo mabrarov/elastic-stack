@@ -6,6 +6,57 @@ Docker Compose project for Elastic cluster consisting of:
 1. 1 coordinating Elasticsearch node.
 1. 2 Kibana nodes and HAProxy load balancer in front of them.
 
+```text
+                   ┌─────────────────────────────┐
+                   |                             |
+                   │         Kibana user         │
+                   |                             |
+                   └──────────────┬──────────────┘
+                                  │
+                   ┌──────────────▼──────────────┐
+                   │       kibana-balancer       │
+                   |                             |
+                   │          (HAProxy)          │
+                   └──────────────┬──────────────┘
+                                  │
+               ┌──────────────────▼──────────────────┐
+               │                                     │
+┌──────────────▼──────────────┐       ┌──────────────▼──────────────┐
+│                             │       │                             │
+|           kibana1           |       |           kibana2           |
+│                             │       │                             │
+└──────────────┬──────────────┘       └──────────────┬──────────────┘
+               │                                     │
+               ▼──────────────────┬──────────────────▼
+                                  │
+                ┌─────────────────│─────────────────┐
+                │                 │                 │
+                │  ┌──────────────▼──────────────┐  │
+                │  │       elasticsearch4        │  │
+                │  │                             │  │
+                │  │     (coordinating node)     │  │
+                │  └─────────────────────────────┘  │
+                │  ┌─────────────────────────────┐  │
+                │  │       elasticsearch1        │  │
+                │  |                             |  │
+                │  │ (master-eligible data node) │  │
+                │  └─────────────────────────────┘  │
+                │  ┌─────────────────────────────┐  │
+                │  │       elasticsearch2        │  │
+                │  │                             │  │
+                │  │ (master-eligible data node) │  │
+                │  └─────────────────────────────┘  │
+                │  ┌─────────────────────────────┐  │
+                │  │       elasticsearch3        │  │
+                │  |                             |  │
+                │  │ (master-eligible data node) │  │
+                │  └─────────────────────────────┘  │
+                │                                   │
+                │       Elasticsearch cluster       │
+                │                                   │
+                └───────────────────────────────────┘
+```
+
 Useful commands for [Kibana Dev Tools](http://localhost/app/dev_tools#/console):
 
 ```text
