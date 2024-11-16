@@ -4,7 +4,8 @@ Docker Compose project for Elastic cluster consisting of:
 
 1. 3 master-eligible / data / ingesting Elasticsearch nodes.
 1. 2 [coordinating only](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#coordinating-only-node) Elasticsearch nodes.
-1. 2 Kibana nodes and HAProxy load balancer in front of them.
+1. 2 Kibana instances.
+1. HAProxy load balancer in front of Kibana instances.
 
 ```text
                       ┌─────────────────────────────┐
@@ -27,7 +28,7 @@ Docker Compose project for Elastic cluster consisting of:
    │                             │       │                             │
    └──────────────┬──────────────┘       └──────────────┬──────────────┘
                   │                                     │
-                  └──────────────────┬──────────────────┘
+                  └──────────────────▼──────────────────┘
                                      │
 ┌────────────────────────────────────│────────────────────────────────────┐
 |                                    |                                    |
