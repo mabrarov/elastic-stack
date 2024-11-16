@@ -2,11 +2,11 @@
 
 Docker Compose project for Elastic cluster consisting of:
 
-1. 3 master / data / ingesting Elasticsearch nodes.
+1. 3 master-eligible / data / ingesting Elasticsearch nodes.
 1. 1 coordinating Elasticsearch node.
-1. 1 Kibana node
+1. 2 Kibana nodes and HAProxy load balancer in front of them.
 
-Useful commands for [Kibana Dev Tools](http://localhost:5601/app/dev_tools#/console):
+Useful commands for [Kibana Dev Tools](http://localhost/app/dev_tools#/console):
 
 ```text
 GET _cat/nodes?v
