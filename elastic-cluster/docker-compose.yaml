@@ -49,7 +49,7 @@ x-elasticsearch-master-nodes: &elasticsearch-master-nodes
 # noinspection ComposeUnknownKeys
 x-elasticsearch-data-conf: &elasticsearch-data-conf
   <<: *elasticsearch-master-nodes
-  node.roles: "[ master, data, data_hot, ingest ]"
+  node.roles: "[ master, data, ingest ]"
   bootstrap.memory_lock: "true"
   xpack.security.enabled: "true"
   xpack.security.http.ssl.enabled: "true"
