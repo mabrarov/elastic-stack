@@ -67,6 +67,12 @@ Docker Compose project for Elastic cluster consisting of:
                       │   elasticsearch-balancer    │
                       │                             │
                       │          (HAProxy)          │
+                      └──────────────▲──────────────┘
+                                     │
+                      ┌──────────────┴──────────────┐
+                      │                             │
+                      │     Elasticsearch user      │
+                      │                             │
                       └─────────────────────────────┘
 ```
 
