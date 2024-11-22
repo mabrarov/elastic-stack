@@ -83,7 +83,7 @@ x-elasticsearch-coordinating-conf: &elasticsearch-coordinating-conf
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
-  "https://elasticsearch4:9200"
+  "http://elasticsearch-balancer:8080"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-entrypoint: &elasticsearch-entrypoint
@@ -375,8 +375,6 @@ services:
       xpack.security.transport.ssl.key: "certs/elasticsearch4/elasticsearch4.key"
       xpack.security.transport.ssl.certificate: "certs/elasticsearch4/elasticsearch4.crt"
       <<: *elasticsearch-coordinating-conf
-    ports:
-      - "9204:9200"
     volumes:
       - *elasticsearch-certs-volume
       - "elasticsearch4-data:/usr/share/elasticsearch/data"
@@ -399,11 +397,36 @@ services:
       xpack.security.transport.ssl.key: "certs/elasticsearch5/elasticsearch5.key"
       xpack.security.transport.ssl.certificate: "certs/elasticsearch5/elasticsearch5.crt"
       <<: *elasticsearch-coordinating-conf
-    ports:
-      - "9205:9200"
     volumes:
       - *elasticsearch-certs-volume
       - "elasticsearch5-data:/usr/share/elasticsearch/data"
+    logging: *default-logging
+
+  elasticsearch-balancer:
+    image: "haproxy:alpine"
+    mem_limit: "256m"
+    mem_reservation: "64m"
+    ulimits: *default-ulimits
+    environment:
+      CLIENT_TIMEOUT: "150s"
+      SERVER_TIMEOUT: "120s"
+      BACKEND_CA_BUNDLE: "/usr/local/etc/haproxy/ca.crt"
+      BACKEND_CHECK_URI: "/_cluster/health?wait_for_status=green&timeout=5s"
+      BACKEND_CHECK_USER_AGENT: "balancer"
+      # Base64("elastic:elastic")
+      BACKEND_CHECK_BASIC_AUTH: "ZWxhc3RpYzplbGFzdGlj"
+      BACKEND_CHECK_INTER: "10s"
+      BACKEND_CHECK_FALL: "1"
+      BACKEND_CHECK_RISE: "1"
+      BACKEND1_HOST: "elasticsearch4"
+      BACKEND1_PORT: "9200"
+      BACKEND2_HOST: "elasticsearch5"
+      BACKEND2_PORT: "9200"
+    ports:
+      - "9204:8080"
+    volumes:
+      - "${COMPOSE_PROJECT_DIRECTORY:-.}/elasticsearch-balancer/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
+      - "${COMPOSE_PROJECT_DIRECTORY:-.}/../certificates/ca_cert.crt:/usr/local/etc/haproxy/ca.crt:ro"
     logging: *default-logging
 
   kibana1:

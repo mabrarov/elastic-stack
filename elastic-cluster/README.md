@@ -6,6 +6,7 @@ Docker Compose project for Elastic cluster consisting of:
 1. 2 [coordinating only](https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-node.html#coordinating-only-node) Elasticsearch nodes.
 1. 2 Kibana instances.
 1. HAProxy load balancer in front of Kibana instances.
+1. HAProxy load balancer in front of Elasticsearch coordinating only nodes.
 
 ```text
                       ┌─────────────────────────────┐
@@ -38,26 +39,35 @@ Docker Compose project for Elastic cluster consisting of:
 │  │       elasticsearch4        │       │       elasticsearch5        │  │
 │  │                             │       │                             │  │
 │  │  (coordinating only node)   │       │  (coordinating only node)   │  │
-│  └─────────────────────────────┘       └─────────────────────────────┘  │
-│                     ┌─────────────────────────────┐                     │
-│                     │       elasticsearch1        │                     │
-│                     │                             │                     │
-│                     │ (master-eligible data node) │                     │
-│                     └─────────────────────────────┘                     │
-│                     ┌─────────────────────────────┐                     │
-│                     │       elasticsearch2        │                     │
-│                     │                             │                     │
-│                     │ (master-eligible data node) │                     │
-│                     └─────────────────────────────┘                     │
-│                     ┌─────────────────────────────┐                     │
-│                     │       elasticsearch3        │                     │
-│                     │                             │                     │
-│                     │ (master-eligible data node) │                     │
-│                     └─────────────────────────────┘                     │
-│                                                                         │
-│                          Elasticsearch cluster                          │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+│  └──────────────▲──────────────┘       └──────────────▲──────────────┘  │
+│                 │   ┌─────────────────────────────┐   │                 │
+│                 │   │       elasticsearch1        │   │                 │
+│                 │   │                             │   │                 │
+│                 │   │ (master-eligible data node) │   │                 │
+│                 │   └─────────────────────────────┘   │                 │
+│                 │   ┌─────────────────────────────┐   │                 │
+│                 │   │       elasticsearch2        │   │                 │
+│                 │   │                             │   │                 │
+│                 │   │ (master-eligible data node) │   │                 │
+│                 │   └─────────────────────────────┘   │                 │
+│                 │   ┌─────────────────────────────┐   │                 │
+│                 │   │       elasticsearch3        │   │                 │
+│                 │   │                             │   │                 │
+│                 │   │ (master-eligible data node) │   │                 │
+│                 │   └─────────────────────────────┘   │                 │
+│                 │                                     │                 │
+│                 │                                     │                 │
+│                 └──────────────────▲──────────────────┘                 │
+│                                    │                                    │
+│      Elasticsearch cluster         │                                    │
+│                                    │                                    │
+└────────────────────────────────────│────────────────────────────────────┘
+                                     │
+                      ┌──────────────┴──────────────┐
+                      │   elasticsearch-balancer    │
+                      │                             │
+                      │          (HAProxy)          │
+                      └─────────────────────────────┘
 ```
 
 Useful commands for [Kibana Dev Tools](http://localhost/app/dev_tools#/console):
