@@ -1,14 +1,12 @@
-version: "2.2"
-
 # Refer to https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/docker-compose.yml
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
-  "elasticsearch:8.16.0"
+  "elasticsearch:8.17.0"
 
 # noinspection ComposeUnknownKeys
 x-kibana-image: &kibana-image
-  "kibana:8.16.0"
+  "kibana:8.17.0"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
