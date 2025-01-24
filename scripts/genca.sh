@@ -48,16 +48,11 @@ touch "${database_file}"
 
 native_path() {
   path="${1}"
-  uname -s | grep '^MINGW.*$' &> /dev/null && mingw=1 || mingw=0
-  if [[ "${mingw}" -eq 0 ]]; then
+  if [[ "$(uname -s)" =~ ^(MSYS|MINGW).* ]]; then
+    cygpath -w "${path}"
+  else
     echo "${path}"
-    return
   fi
-  if ! echo "${path}" | grep -P '^\/[a-zA-Z](\/.*)?$' &> /dev/null ; then
-    echo "${path}"
-    return
-  fi
-  echo "${path}" | sed -r 's/^\/([a-zA-Z])(\/.*)?$/\U\1\E:\2/;t;d'
 }
 
 (
