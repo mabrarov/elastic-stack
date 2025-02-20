@@ -34,7 +34,7 @@ x-ulimits: &default-ulimits
 x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "http://elasticsearch:9200"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-elasticsearch-entrypoint: &elasticsearch-entrypoint
   - "/bin/tini"
   - "-e"
@@ -43,7 +43,7 @@ x-elasticsearch-entrypoint: &elasticsearch-entrypoint
   - "143"
   - "--"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-elasticsearch-command: &elasticsearch-command
   - "/usr/local/bin/docker-entrypoint.sh"
   - "eswrapper"
@@ -57,7 +57,7 @@ x-elasticsearch-healthcheck: &elasticsearch-healthcheck
   timeout: "25s"
   retries: 20
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-kibana-entrypoint: &kibana-entrypoint
   - "/bin/tini"
   - "-e"
@@ -66,7 +66,7 @@ x-kibana-entrypoint: &kibana-entrypoint
   - "143"
   - "--"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-kibana-command: &kibana-command
   - "/usr/local/bin/kibana-docker"
 

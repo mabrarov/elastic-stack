@@ -83,7 +83,7 @@ x-elasticsearch-coordinating-conf: &elasticsearch-coordinating-conf
 x-elasticsearch-api-endpoint: &elasticsearch-api-endpoint
   "http://elasticsearch-balancer:8080"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-elasticsearch-entrypoint: &elasticsearch-entrypoint
   - "/bin/tini"
   - "-e"
@@ -92,7 +92,7 @@ x-elasticsearch-entrypoint: &elasticsearch-entrypoint
   - "143"
   - "--"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-elasticsearch-command: &elasticsearch-command
   - "/usr/local/bin/docker-entrypoint.sh"
   - "eswrapper"
@@ -126,7 +126,7 @@ x-kibana-conf: &kibana-conf
   TELEMETRY_ENABLED: "false"
   NEWSFEED_ENABLED: "false"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-kibana-entrypoint: &kibana-entrypoint
   - "/bin/tini"
   - "-e"
@@ -135,7 +135,7 @@ x-kibana-entrypoint: &kibana-entrypoint
   - "143"
   - "--"
 
-# noinspection ComposeUnknownKeys
+# noinspection ComposeUnknownKeys,ComposeUnknownValues
 x-kibana-command: &kibana-command
   - "/usr/local/bin/kibana-docker"
 
