@@ -1,0 +1,21 @@
+service:
+  flush: 10
+pipeline:
+  inputs:
+    - name: dummy
+      dummy: "{ \"message\" : \"this is dummy data\" }"
+      rate: 10
+  outputs:
+    - name: es
+      host: localhost
+      port: 9201
+      tls: true
+      tls.verify_hostname: true
+      tls.ca_file: ../certificates/ca_cert.crt
+      tls.vhost: elasticsearch1
+      retry_limit: 6
+      replace_dots: true
+      suppress_type_name: true
+      http_user: elastic
+      http_passwd: elastic
+      index: fluent-bit
