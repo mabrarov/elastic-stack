@@ -1,0 +1,46 @@
+service:
+  flush: 10
+pipeline:
+  inputs:
+    - name: dummy
+      dummy: "{ \"message\" : \"this is dummy data\" }"
+      rate: 10
+  outputs:
+    - name: es
+      workers: 4
+      retry_limit: 6
+      replace_dots: true
+      suppress_type_name: true
+      http_user: elastic
+      http_passwd: elastic
+      index: fluent-bit
+      upstream: ./fluent-bit.yaml
+upstream_servers:
+  - name: elasticsearch-balancing
+    nodes:
+      - name: elasticsearch1
+        host: localhost
+        port: 9201
+        tls: true
+        tls.verify_hostname: true
+        tls.ca_file: ../certificates/ca_cert.crt
+        tls.vhost: elasticsearch1
+        index: fluent-bit-000002
+        buffer_size: 4M
+      - name: elasticsearch2
+        host: localhost
+        port: 9202
+        tls: true
+        tls.verify_hostname: true
+        tls.ca_file: ../certificates/ca_cert.crt
+        tls.vhost: elasticsearch2
+        index: fluent-bit-000003
+        compress: gzip
+      - name: elasticsearch3
+        host: localhost
+        port: 9203
+        tls: true
+        tls.verify_hostname: true
+        tls.ca_file: ../certificates/ca_cert.crt
+        tls.vhost: elasticsearch3
+        index: fluent-bit-000004
