@@ -2,11 +2,15 @@
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
-  "elasticsearch:9.2.0"
+  "elasticsearch:9.2.3"
 
 # noinspection ComposeUnknownKeys
 x-kibana-image: &kibana-image
-  "kibana:9.2.0"
+  "kibana:9.2.3"
+
+# noinspection ComposeUnknownKeys
+x-balancer-image: &balancer-image
+  "haproxy:2.8-alpine"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
@@ -401,7 +405,7 @@ services:
     logging: *default-logging
 
   elasticsearch-balancer:
-    image: "haproxy:alpine"
+    image: *balancer-image
     mem_limit: "256m"
     mem_reservation: "64m"
     ulimits: *default-ulimits
@@ -462,7 +466,7 @@ services:
     logging: *default-logging
 
   kibana-balancer:
-    image: "haproxy:alpine"
+    image: *balancer-image
     mem_limit: "256m"
     mem_reservation: "64m"
     ulimits: *default-ulimits
