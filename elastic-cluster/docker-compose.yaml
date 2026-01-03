@@ -10,7 +10,7 @@ x-kibana-image: &kibana-image
 
 # noinspection ComposeUnknownKeys
 x-balancer-image: &balancer-image
-  "haproxy:2.8-alpine"
+  "haproxy:3.3-alpine"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
