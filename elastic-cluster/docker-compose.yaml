@@ -2,11 +2,11 @@
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
-  "elasticsearch:9.2.3"
+  "elasticsearch:9.3.2"
 
 # noinspection ComposeUnknownKeys
 x-kibana-image: &kibana-image
-  "kibana:9.2.3"
+  "kibana:9.3.2"
 
 # noinspection ComposeUnknownKeys
 x-balancer-image: &balancer-image
