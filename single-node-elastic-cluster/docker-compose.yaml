@@ -2,11 +2,11 @@
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-image: &elasticsearch-image
-  "elasticsearch:9.4.4"
+  "elasticsearch:9.5.5"
 
 # noinspection ComposeUnknownKeys
 x-kibana-image: &kibana-image
-  "kibana:9.4.4"
+  "kibana:9.5.5"
 
 # noinspection ComposeUnknownKeys
 x-elasticsearch-username: &elasticsearch-username
@@ -132,7 +132,7 @@ services:
 
   kibana:
     image: *kibana-image
-    mem_limit: "1024m"
+    mem_limit: "1536m"
     mem_reservation: "512m"
     ulimits: *default-ulimits
     entrypoint: *kibana-entrypoint
